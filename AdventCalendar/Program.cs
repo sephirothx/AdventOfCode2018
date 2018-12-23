@@ -12,8 +12,8 @@ namespace AdventCalendar
         {
             private class Drone
             {
-                public (int x, int y, int z) Location { get; set; }
-                public int Radius { get; set; }
+                public (int x, int y, int z) Location { get; private set; }
+                public int Radius { get; private set; }
 
                 public Drone(int x, int y, int z, int radius)
                 {
@@ -21,34 +21,49 @@ namespace AdventCalendar
                     Radius   = radius;
                 }
 
-                public int CalculateDistance(int x, int y, int z)
+                public int CalculateDistance((int x, int y, int z) point)
                 {
-                    return Math.Abs(Location.x - x) +
-                           Math.Abs(Location.y - y) +
-                           Math.Abs(Location.z - z);
+                    return ManhattanDistance(Location, point);
                 }
 
                 public int CalculateDistance(Drone d)
                 {
-                    return Math.Abs(Location.x - d.Location.x) +
-                           Math.Abs(Location.y - d.Location.y) +
-                           Math.Abs(Location.z - d.Location.z);
+                    return ManhattanDistance(Location, d.Location);
                 }
 
-                public IEnumerable<(int x, int y, int z)> GetCoordinatesInRange()
+                public IEnumerable<(int x, int y, int z)> GetVertices()
                 {
-                    var list = new List<(int, int, int)>();
-                    for (int x = Location.x - Radius; x < Location.x + Radius; x++)
-                    for (int y = Location.y - Radius; x < Location.y + Radius; x++)
-                    for (int z = Location.z - Radius; x < Location.z + Radius; x++)
-                    {
-                        if (CalculateDistance(x, y, z) <= Radius)
-                        {
-                            list.Add((x, y, z));
-                        }
-                    }
+                    var list = new List<(int x, int y, int z)>
+                               {
+                                   (Location.x, Location.y, Location.z + Radius),
+                                   (Location.x, Location.y, Location.z - Radius),
+                                   (Location.x, Location.y + Radius, Location.z),
+                                   (Location.x, Location.y - Radius, Location.z),
+                                   (Location.x + Radius, Location.y, Location.z),
+                                   (Location.x - Radius, Location.y, Location.z)
+                               };
 
                     return list;
+                }
+
+                public IEnumerable<(int x, int y, int z)> GetPointsOfInterest(int distance)
+                {
+                    var list = new List<(int x, int y, int z)>();
+                    foreach (var point in GetVertices())
+                    {
+                        list.AddRange(GetNeighbors(point, distance).Where(neighbor => CalculateDistance(neighbor) == Radius));
+                    }
+                    return list;
+                }
+
+                public bool IsInRange((int x, int y, int z) point)
+                {
+                    return ManhattanDistance(point, Location) <= Radius;
+                }
+
+                public bool IsInRange(Drone d)
+                {
+                    return ManhattanDistance(Location, d.Location) <= Radius;
                 }
             }
 
@@ -65,18 +80,36 @@ namespace AdventCalendar
                 return drones;
             }
 
+            private static IEnumerable<(int, int, int)> GetNeighbors((int x, int y, int z) point, int distance)
+            {
+                var list = new List<(int, int, int)>();
+
+                for (int x = point.x-distance; x <= point.x+distance; x++)
+                for (int y = point.y-distance; y <= point.y+distance; y++)
+                for (int z = point.z-distance; z <= point.z+distance; z++)
+                {
+                    list.Add((x, y, z));
+                }
+
+                return list;
+            }
+
+            private static int ManhattanDistance((int x, int y, int z) point1, (int x, int y, int z) point2)
+            {
+                return Math.Abs(point1.x - point2.x) +
+                       Math.Abs(point1.y - point2.y) +
+                       Math.Abs(point1.z - point2.z);
+            }
+
             public static void Day23_1(IEnumerable<string> input)
             {
-                var drones = GetInput(input);
-
-                var maxRadius = drones.Max(d => d.Radius);
+                var drones         = GetInput(input);
                 var strongestDrone = drones.First(d => d.Radius == drones.Max(dd => dd.Radius));
+                int count          = 0;
 
-                int count = 0;
                 foreach (var drone in drones)
                 {
-                    int distance = strongestDrone.CalculateDistance(drone);
-                    if (distance <= maxRadius)
+                    if (strongestDrone.IsInRange(drone))
                     {
                         count++;
                     }
@@ -88,43 +121,39 @@ namespace AdventCalendar
             public static void Day23_2(IEnumerable<string> input)
             {
                 var drones = GetInput(input);
-
-                int minX = int.MaxValue;
-                int minY = int.MaxValue;
-                int minZ = int.MaxValue;
-
-                int maxX = int.MinValue;
-                int maxY = int.MinValue;
-                int maxZ = int.MinValue;
+                var points = new Dictionary<(int,int,int), int>();
 
                 foreach (var drone in drones)
+                foreach (var point in drone.GetPointsOfInterest(100))
                 {
-                    minX = Math.Min(minX, drone.Location.x);
-                    minY = Math.Min(minY, drone.Location.y);
-                    minZ = Math.Min(minZ, drone.Location.z);
+                    if (points.ContainsKey(point)) continue;
 
-                    maxX = Math.Max(maxX, drone.Location.x);
-                    maxY = Math.Max(maxY, drone.Location.y);
-                    maxZ = Math.Max(maxZ, drone.Location.z);
-                }
-
-                int X = maxX - minX;
-                int Y = maxY - minY;
-                int Z = maxZ - minZ;
-
-                var map = new int[X, Y, Z];
-                int maxDronesInRange = 0;
-
-                foreach (var drone in drones)
-                {
-                    foreach ((int x, int y, int z) in drone.GetCoordinatesInRange())
+                    points.Add(point, 0);
+                    foreach (var drone1 in drones)
                     {
-                        map[x, y, z]++;
-                        maxDronesInRange = Math.Max(maxDronesInRange, map[x, y, z]);
+                        if (drone1.IsInRange(point))
+                        {
+                            points[point]++;
+                        }
                     }
                 }
 
-                Console.WriteLine(maxDronesInRange);
+                int distanceFromZero = int.MaxValue;
+                int maxIntersection = int.MinValue;
+                foreach (var point in points)
+                {
+                    if (point.Value > maxIntersection)
+                    {
+                        maxIntersection = point.Value;
+                        int distance = ManhattanDistance((0, 0, 0), point.Key);
+                        if (distance < distanceFromZero)
+                        {
+                            distanceFromZero = distance;
+                        }
+                    }
+                }
+
+                Console.WriteLine(distanceFromZero);
             }
         }
         private static void Main()
