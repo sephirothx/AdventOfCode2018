@@ -11,7 +11,7 @@ namespace AdventCalendar
             var          input = File.ReadAllLines(PATH);
 
             Console.WriteLine(DateTime.Now.TimeOfDay);
-            Day23.Day23_2(input);
+            Day24.Day24_2();
             Console.WriteLine(DateTime.Now.TimeOfDay);
         }
     }
