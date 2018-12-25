@@ -68,6 +68,7 @@
     <Compile Include="Program.Day22.cs" />
     <Compile Include="Program.Day23.cs" />
     <Compile Include="Program.Day24.cs" />
+    <Compile Include="Program.Day25.cs" />
     <Compile Include="Program.Day3.cs" />
     <Compile Include="Program.Day4.cs" />
     <Compile Include="Program.Day5.cs" />

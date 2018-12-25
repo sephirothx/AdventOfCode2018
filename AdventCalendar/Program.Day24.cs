@@ -11,6 +11,7 @@ namespace AdventCalendar
         private static class Day24
         {
             private const int MAX_ALLOWED_ITERATIONS = 10000;
+
             private class UnitGroup
             {
                 public enum Races
@@ -21,19 +22,19 @@ namespace AdventCalendar
 
                 public Races Race { get; }
                 public int Units { get; private set; }
-                private int HP { get; }
                 public int Attack { get; set; }
-                private string AttackType { get; }
                 public int Initiative { get; }
 
-                private readonly int _startingUnits;
-
                 public int EffectivePower => Units * Attack;
+                public UnitGroup Target { get; set; }
+
+                private int HP { get; }
+                private string AttackType { get; }
+                private readonly int _startingUnits;
 
                 private List<string> Weaknesses { get; }
                 private List<string> Immunities { get; }
 
-                public UnitGroup Target { get; set; }
 
                 public UnitGroup(Races race, int units, int hp, int attack, string attackType, int initiative, List<string> weaknesses, List<string> immunities)
                 {
