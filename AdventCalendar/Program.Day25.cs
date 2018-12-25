@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace AdventCalendar
@@ -10,11 +11,11 @@ namespace AdventCalendar
         {
             private class Point
             {
-                private (int x, int y, int z, int t) Location { get; }
+                private (int x0, int x1, int x2, int x3) Location { get; }
 
-                public Point(int x, int y, int z, int t)
+                public Point(int x0, int x1, int x2, int x3)
                 {
-                    Location = (x, y, z, t);
+                    Location = (x0, x1, x2, x3);
                 }
 
                 public int Distance(Point point)
@@ -23,34 +24,29 @@ namespace AdventCalendar
                 }
             }
 
-            private static List<Point> GetInput(IEnumerable<string> input)
+            private static IEnumerable<Point> GetInput(IEnumerable<string> input)
             {
-                var regex = new Regex(@"(-?\d+),(-?\d+),(-?\d+),(-?\d+)");
                 var points = new List<Point>();
 
                 foreach (string line in input)
                 {
-                    var match = regex.Match(line);
+                    var x = line.Split(',').Select(int.Parse).ToArray();
 
-                    int x = int.Parse(match.Groups[1].Value);
-                    int y = int.Parse(match.Groups[2].Value);
-                    int z = int.Parse(match.Groups[3].Value);
-                    int t = int.Parse(match.Groups[4].Value);
-
-                    points.Add(new Point(x, y, z, t));
+                    points.Add(new Point(x[0], x[1], x[2], x[3]));
                 }
 
                 return points;
             }
 
-            private static int ManhattanDistance((int x, int y, int z, int t) point1,
-                                                 (int x, int y, int z, int t) point2)
+            private static int ManhattanDistance((int x0, int x1, int x2, int x3) point1,
+                                                 (int x0, int x1, int x2, int x3) point2)
             {
-                return Math.Abs(point1.x - point2.x) +
-                       Math.Abs(point1.y - point2.y) +
-                       Math.Abs(point1.z - point2.z) +
-                       Math.Abs(point1.t - point2.t);
+                return Math.Abs(point1.x0 - point2.x0) +
+                       Math.Abs(point1.x1 - point2.x1) +
+                       Math.Abs(point1.x2 - point2.x2) +
+                       Math.Abs(point1.x3 - point2.x3);
             }
+
             public static void Day25_1(IEnumerable<string> input)
             {
                 var points = GetInput(input);
