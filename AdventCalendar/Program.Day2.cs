@@ -40,25 +40,26 @@ namespace AdventCalendar
                 return num2 * num3;
             }
 
-            public static string Day2_2(IEnumerable<string> input)
+            public static string Day2_2(IReadOnlyList<string> input)
             {
-                var strings = input as string[] ?? input.ToArray();
-                for (var i = 0; i < strings.Length; i++)
+                for (var i = 0; i < input.Count; i++)
                 {
-                    for (var j = i; j < strings.Length; j++)
+                    for (var j = i; j < input.Count; j++)
                     {
                         int numDiff = 0,
                             index   = 0;
-                        for (var k = 0; k < strings[i].Length; k++)
+                        for (var k = 0; k < input[i].Length; k++)
                         {
-                            if (strings[i][k] == strings[j][k]) continue;
+                            if (input[i][k] == input[j][k]) continue;
 
                             numDiff++;
                             index = k;
                         }
 
                         if (numDiff == 1)
-                            return strings[i].Remove(index, 1);
+                        {
+                            return input[i].Remove(index, 1);
+                        }
                     }
                 }
 
