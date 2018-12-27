@@ -21,14 +21,6 @@ namespace AdventCalendar
 
             private class Cart
             {
-                public enum Direction
-                {
-                    Up,
-                    Down,
-                    Right,
-                    Left
-                }
-
                 private enum IntersectionDirection
                 {
                     Left,
@@ -37,13 +29,13 @@ namespace AdventCalendar
                 }
 
                 private IntersectionDirection NextIntersection { get; set; }
-                public Direction CurrentDirection { get; set; }
+                public (int x, int y) Direction { get; set; }
                 public int ID { get; }
 
-                public Cart(int id, Direction direction)
+                public Cart(int id, (int, int) direction)
                 {
                     ID               = id;
-                    CurrentDirection = direction;
+                    Direction        = direction;
                     NextIntersection = IntersectionDirection.Left;
                 }
 
@@ -53,24 +45,7 @@ namespace AdventCalendar
                     {
                     case IntersectionDirection.Left:
                         NextIntersection = IntersectionDirection.Straight;
-                        switch (CurrentDirection)
-                        {
-                        case Direction.Up:
-                            CurrentDirection = Direction.Left;
-                            break;
-                        case Direction.Down:
-                            CurrentDirection = Direction.Right;
-                            break;
-                        case Direction.Right:
-                            CurrentDirection = Direction.Up;
-                            break;
-                        case Direction.Left:
-                            CurrentDirection = Direction.Down;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                        }
-
+                        Direction = (Direction.y, -Direction.x);
                         break;
 
                     case IntersectionDirection.Straight:
@@ -79,54 +54,12 @@ namespace AdventCalendar
 
                     case IntersectionDirection.Right:
                         NextIntersection = IntersectionDirection.Left;
-                        switch (CurrentDirection)
-                        {
-                        case Direction.Up:
-                            CurrentDirection = Direction.Right;
-                            break;
-                        case Direction.Down:
-                            CurrentDirection = Direction.Left;
-                            break;
-                        case Direction.Right:
-                            CurrentDirection = Direction.Down;
-                            break;
-                        case Direction.Left:
-                            CurrentDirection = Direction.Up;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                        }
-
+                        Direction = (-Direction.y, Direction.x);
                         break;
 
                     default:
                         throw new ArgumentOutOfRangeException();
                     }
-                }
-
-                public void Print()
-                {
-                    char v;
-
-                    switch (CurrentDirection)
-                    {
-                    case Direction.Up:
-                        v = CART_UP;
-                        break;
-                    case Direction.Down:
-                        v = CART_DOWN;
-                        break;
-                    case Direction.Right:
-                        v = CART_RIGHT;
-                        break;
-                    case Direction.Left:
-                        v = CART_LEFT;
-                        break;
-                    default:
-                        throw new ArgumentOutOfRangeException();
-                    }
-
-                    Console.Write(v);
                 }
             }
 
@@ -134,7 +67,7 @@ namespace AdventCalendar
             {
                 private Cart[,] Carts { get; set; }
                 private string[] Map { get; }
-                public (int X, int Y) CollisionSpot { get; private set; }
+                public (int x, int y) CollisionSpot { get; private set; }
                 public int CartsCount { get; private set; }
 
                 public Mine(Cart[,] carts, string[] map, int cartsCount)
@@ -184,34 +117,35 @@ namespace AdventCalendar
                         if (Carts[y, x] == null) continue;
 
                         var cart = Carts[y, x];
-                        switch (cart.CurrentDirection)
+
+                        int dy = y + cart.Direction.y;
+                        int dx = x + cart.Direction.x;
+
+                        if (newCarts[dy, dx] != null)
                         {
-                        case Cart.Direction.Up:
-                            if (newCarts[y - 1, x] != null)
+                            if (firstCollision)
                             {
-                                if (firstCollision)
-                                {
-                                    CollisionSpot  = (x, y - 1);
-                                    firstCollision = false;
-                                }
-
-                                RemoveCartByID(newCarts[y, x].ID);
-                                RemoveCartByID(newCarts[y - 1, x].ID);
-                                newCarts[y, x]     =  null;
-                                newCarts[y - 1, x] =  null;
-                                CartsCount         -= 2;
-                                ret                =  true;
-                                break;
+                                CollisionSpot  = (dx, dy);
+                                firstCollision = false;
                             }
 
-                            switch (Map[y - 1][x])
+                            RemoveCartByID(newCarts[y, x].ID);
+                            RemoveCartByID(newCarts[dy, dx].ID);
+                            newCarts[y, x]   =  null;
+                            newCarts[dy, dx] =  null;
+                            CartsCount       -= 2;
+                            ret              =  true;
+                        }
+                        else
+                        {
+                            switch (Map[dy][dx])
                             {
                             case TURN_NE:
-                                cart.CurrentDirection = Cart.Direction.Right;
+                                cart.Direction = (-cart.Direction.y, -cart.Direction.x);
                                 break;
 
                             case TURN_SE:
-                                cart.CurrentDirection = Cart.Direction.Left;
+                                cart.Direction = (cart.Direction.y, cart.Direction.x);
                                 break;
 
                             case INTERSECTION:
@@ -219,149 +153,14 @@ namespace AdventCalendar
                                 break;
                             }
 
-                            newCarts[y - 1, x] = cart;
-                            newCarts[y, x]     = null;
-                            break;
-
-                        case Cart.Direction.Down:
-                            if (newCarts[y + 1, x] != null)
-                            {
-                                if (firstCollision)
-                                {
-                                    CollisionSpot  = (x, y + 1);
-                                    firstCollision = false;
-                                }
-
-                                RemoveCartByID(newCarts[y, x].ID);
-                                RemoveCartByID(newCarts[y + 1, x].ID);
-                                newCarts[y, x]     =  null;
-                                newCarts[y + 1, x] =  null;
-                                CartsCount         -= 2;
-                                ret                =  true;
-                                break;
-                            }
-
-                            switch (Map[y + 1][x])
-                            {
-                            case TURN_NE:
-                                cart.CurrentDirection = Cart.Direction.Left;
-                                break;
-
-                            case TURN_SE:
-                                cart.CurrentDirection = Cart.Direction.Right;
-                                break;
-
-                            case INTERSECTION:
-                                cart.Intersection();
-                                break;
-                            }
-
-                            newCarts[y + 1, x] = cart;
-                            newCarts[y, x]     = null;
-                            break;
-
-                        case Cart.Direction.Right:
-                            if (newCarts[y, x + 1] != null)
-                            {
-                                if (firstCollision)
-                                {
-                                    CollisionSpot  = (x + 1, y);
-                                    firstCollision = false;
-                                }
-
-                                RemoveCartByID(newCarts[y, x].ID);
-                                RemoveCartByID(newCarts[y, x + 1].ID);
-                                newCarts[y, x]     =  null;
-                                newCarts[y, x + 1] =  null;
-                                CartsCount         -= 2;
-                                ret                =  true;
-                                break;
-                            }
-
-                            switch (Map[y][x + 1])
-                            {
-                            case TURN_NE:
-                                cart.CurrentDirection = Cart.Direction.Up;
-                                break;
-
-                            case TURN_SE:
-                                cart.CurrentDirection = Cart.Direction.Down;
-                                break;
-
-                            case INTERSECTION:
-                                cart.Intersection();
-                                break;
-                            }
-
-                            newCarts[y, x + 1] = cart;
-                            newCarts[y, x]     = null;
-                            break;
-
-                        case Cart.Direction.Left:
-                            if (newCarts[y, x - 1] != null)
-                            {
-                                if (firstCollision)
-                                {
-                                    CollisionSpot  = (x - 1, y);
-                                    firstCollision = false;
-                                }
-
-                                RemoveCartByID(newCarts[y, x].ID);
-                                RemoveCartByID(newCarts[y, x - 1].ID);
-                                newCarts[y, x]     =  null;
-                                newCarts[y, x - 1] =  null;
-                                CartsCount         -= 2;
-                                ret                =  true;
-                                break;
-                            }
-
-                            switch (Map[y][x - 1])
-                            {
-                            case TURN_NE:
-                                cart.CurrentDirection = Cart.Direction.Down;
-                                break;
-
-                            case TURN_SE:
-                                cart.CurrentDirection = Cart.Direction.Up;
-                                break;
-
-                            case INTERSECTION:
-                                cart.Intersection();
-                                break;
-                            }
-
-                            newCarts[y, x - 1] = cart;
-                            newCarts[y, x]     = null;
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
+                            newCarts[dy, dx] = cart;
+                            newCarts[y, x]   = null;
                         }
                     }
 
                     Carts = newCarts;
 
                     return ret;
-                }
-
-                public void Print()
-                {
-                    Console.Clear();
-
-                    for (int y = 0; y < DIMENSION; y++)
-                    {
-                        for (int x = 0; x < DIMENSION; x++)
-                        {
-                            if (Carts[y, x] != null)
-                            {
-                                Carts[y, x].Print();
-                                continue;
-                            }
-
-                            Console.Write(Map[y][x]);
-                        }
-
-                        Console.WriteLine();
-                    }
                 }
             }
 
@@ -381,7 +180,7 @@ namespace AdventCalendar
                         switch (c)
                         {
                         case CART_UP:
-                            carts[y, x] = new Cart(cartsCount, Cart.Direction.Up);
+                            carts[y, x] = new Cart(cartsCount, (0, -1));
                             cartsCount++;
                             substitute    = input[y].ToCharArray();
                             substitute[x] = RAIL_V;
@@ -389,7 +188,7 @@ namespace AdventCalendar
                             break;
 
                         case CART_LEFT:
-                            carts[y, x] = new Cart(cartsCount, Cart.Direction.Left);
+                            carts[y, x] = new Cart(cartsCount, (-1, 0));
                             cartsCount++;
                             substitute    = input[y].ToCharArray();
                             substitute[x] = RAIL_H;
@@ -397,7 +196,7 @@ namespace AdventCalendar
                             break;
 
                         case CART_RIGHT:
-                            carts[y, x] = new Cart(cartsCount, Cart.Direction.Right);
+                            carts[y, x] = new Cart(cartsCount, (1, 0));
                             cartsCount++;
                             substitute    = input[y].ToCharArray();
                             substitute[x] = RAIL_H;
@@ -405,26 +204,11 @@ namespace AdventCalendar
                             break;
 
                         case CART_DOWN:
-                            carts[y, x] = new Cart(cartsCount, Cart.Direction.Down);
+                            carts[y, x] = new Cart(cartsCount, (0, 1));
                             cartsCount++;
                             substitute    = input[y].ToCharArray();
                             substitute[x] = RAIL_V;
                             input[y]      = new string(substitute);
-                            break;
-
-                        case RAIL_H:
-                            break;
-
-                        case RAIL_V:
-                            break;
-
-                        case INTERSECTION:
-                            break;
-
-                        case TURN_NE:
-                            break;
-
-                        case TURN_SE:
                             break;
                         }
                     }
@@ -433,7 +217,7 @@ namespace AdventCalendar
                 return cartsCount;
             }
 
-            public static (int x, int y) Day13_1(string[] input)
+            public static void Day13_1(string[] input)
             {
                 var carts      = new Cart[DIMENSION, DIMENSION];
                 int cartsCount = GetInput(input, carts);
@@ -441,10 +225,10 @@ namespace AdventCalendar
 
                 while (!mine.MoveAll()) {}
 
-                return mine.CollisionSpot;
+                Console.WriteLine(mine.CollisionSpot);
             }
 
-            public static (int x, int y) Day13_2(string[] input)
+            public static void Day13_2(string[] input)
             {
                 var carts      = new Cart[DIMENSION, DIMENSION];
                 int cartsCount = GetInput(input, carts);
@@ -455,7 +239,7 @@ namespace AdventCalendar
                     mine.MoveAll();
                 }
 
-                return mine.GetLastCartPosition();
+                Console.WriteLine(mine.GetLastCartPosition());
             }
         }
     }
