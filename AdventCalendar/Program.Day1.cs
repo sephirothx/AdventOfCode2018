@@ -7,7 +7,12 @@ namespace AdventCalendar
     {
         private static class Day1
         {
-            public static int Day1_2(string[] input)
+            public static int Day1_1(IEnumerable<string> input)
+            {
+                return input.Select(int.Parse).Sum();
+            }
+
+            public static int Day1_2(IEnumerable<string> input)
             {
                 int n   = 0;
                 var set = new HashSet<int>();
@@ -24,10 +29,8 @@ namespace AdventCalendar
                         {
                             return n;
                         }
-                        else
-                        {
-                            set.Add(n);
-                        }
+
+                        set.Add(n);
                     }
                 }
             }
