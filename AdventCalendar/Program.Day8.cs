@@ -25,9 +25,7 @@ namespace AdventCalendar
                 int index   = 0;
                 var root    = GetInputTree(numbers, ref index);
 
-                int result = GetResultCheck1(root);
-
-                return result;
+                return GetResultCheck1(root);
             }
 
             public static int Day8_2(string input)
@@ -36,9 +34,7 @@ namespace AdventCalendar
                 int index   = 0;
                 var root    = GetInputTree(numbers, ref index);
 
-                int result = GetResultCheck2(root);
-
-                return result;
+                return GetResultCheck2(root);
             }
 
             private static int GetResultCheck1(Node node)
