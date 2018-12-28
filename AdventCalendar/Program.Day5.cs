@@ -6,7 +6,7 @@ namespace AdventCalendar
     {
         private static class Day5
         {
-            public static int Day5_1(string input)
+            private static string ReactPolymer(string input)
             {
                 int i = 1;
 
@@ -23,6 +23,13 @@ namespace AdventCalendar
                     i++;
                 }
 
+                return input;
+            }
+
+            public static int Day5_1(string input)
+            {
+                input = ReactPolymer(input);
+
                 return input.Length;
             }
 
@@ -35,8 +42,8 @@ namespace AdventCalendar
                 {
                     string buffer = input.Replace(c.ToString(), "")
                                          .Replace(char.ToUpper(c).ToString(), "");
-                    int remainingLength = Day5_1(buffer);
-                    minLength = Math.Min(minLength, remainingLength);
+                    int reactedPolymerLength = ReactPolymer(buffer).Length;
+                    minLength = Math.Min(minLength, reactedPolymerLength);
                 }
 
                 return minLength;
