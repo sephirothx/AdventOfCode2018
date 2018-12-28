@@ -10,10 +10,11 @@ namespace AdventCalendar
             private class Node
             {
                 public char Value { get; }
-                public List<Node> Parents { get; }
-                public List<Node> Children { get; }
-                private int Time { get; set; }
                 public bool Ready { get; private set; }
+
+                private List<Node> Parents { get; }
+                private List<Node> Children { get; }
+                private int Time { get; set; }
 
                 public Node(char value)
                 {
@@ -56,7 +57,7 @@ namespace AdventCalendar
 
                 public IEnumerable<Node> GetReadyChildren()
                 {
-                    return Children.Where(p => p.Ready).ToList();
+                    return Children.Where(c => c.Ready).ToList();
                 }
 
                 public bool DecreaseTimer()
@@ -69,46 +70,43 @@ namespace AdventCalendar
                 }
             }
 
-            public static string Day7_1(IEnumerable<string> input)
+            private static List<Node> GetGraph(IEnumerable<string> input)
             {
-                (char first, char second)[] a = input.Select(p => (p[5], p[36])).ToArray();
-
-                string result = "";
+                (char first, char second)[] steps = input.Select(p => (p[5], p[36])).ToArray();
 
                 var list = new List<Node>();
 
-                foreach (var valueTuple in a)
+                foreach ((char first, char second) in steps)
                 {
-                    var first  = list.Find(p => p.Value == valueTuple.first);
-                    var second = list.Find(p => p.Value == valueTuple.second);
+                    var parent = list.Find(p => p.Value == first);
+                    var child  = list.Find(p => p.Value == second);
 
-                    if (first == null)
+                    if (parent == null)
                     {
-                        first = new Node(valueTuple.first);
-                        list.Add(first);
+                        parent = new Node(first);
+                        list.Add(parent);
                     }
 
-                    if (second == null)
+                    if (child == null)
                     {
-                        second = new Node(valueTuple.second);
-                        list.Add(second);
+                        child = new Node(second);
+                        list.Add(child);
                     }
 
-                    first.Children.Add(second);
-                    second.Parents.Add(first);
+                    parent.AddChild(child);
                 }
+
+                return list;
+            }
+
+            public static string Day7_1(IEnumerable<string> input)
+            {
+                string result = "";
+                var    list   = GetGraph(input);
 
                 while (list.Count() != 0)
                 {
-                    var doableNodes = new List<Node>();
-
-                    foreach (var node in list)
-                    {
-                        if (!node.Parents.Any())
-                        {
-                            doableNodes.Add(node);
-                        }
-                    }
+                    var doableNodes = list.Where(node => node.Ready);
 
                     var next = doableNodes.Aggregate((min, x) => min == null || x.Value < min.Value ? x : min);
 
@@ -125,50 +123,21 @@ namespace AdventCalendar
             {
                 const int MAX_WORKERS = 5;
 
-                (char first, char second)[] a = input.Select(p => (p[5], p[36])).ToArray();
-
                 int result = 0;
-                var list   = new List<Node>();
+                var list   = GetGraph(input);
 
                 int workersAvailable = MAX_WORKERS;
                 var inProgress       = new Node[MAX_WORKERS];
 
-                foreach (var valueTuple in a)
-                {
-                    var first  = list.Find(p => p.Value == valueTuple.first);
-                    var second = list.Find(p => p.Value == valueTuple.second);
-
-                    if (first == null)
-                    {
-                        first = new Node(valueTuple.first);
-                        list.Add(first);
-                    }
-
-                    if (second == null)
-                    {
-                        second = new Node(valueTuple.second);
-                        list.Add(second);
-                    }
-
-                    first.Children.Add(second);
-                    second.Parents.Add(first);
-                }
-
                 while (list.Count != 0)
                 {
-                    var doableNodes = new List<Node>();
-
-                    foreach (var node in list)
-                    {
-                        if (!node.Parents.Any())
-                        {
-                            doableNodes.Add(node);
-                        }
-                    }
+                    var doableNodes = list.Where(node => node.Ready).ToList();
 
                     while (doableNodes.Any() && workersAvailable != 0)
                     {
-                        var next = doableNodes.Aggregate((min, x) => min == null || x.Value < min.Value ? x : min);
+                        var next = doableNodes.Aggregate((min, x) => min == null || x.Value < min.Value
+                                                                         ? x
+                                                                         : min);
 
                         for (int i = 0; i < inProgress.Length; i++)
                         {
@@ -203,47 +172,17 @@ namespace AdventCalendar
                 return result;
             }
 
-            public static int Day7_3(IEnumerable<string> input)
+            public static int Day7_2_V2(IEnumerable<string> input)
             {
                 const int MAX_WORKERS = 5;
 
-                (char first, char second)[] a = input.Select(p => (p[5], p[36])).ToArray();
-
                 int result = 0;
-                var list   = new List<Node>();
+                var list   = GetGraph(input);
 
                 int workersAvailable = MAX_WORKERS;
                 var inProgress       = new Node[MAX_WORKERS];
 
-                foreach (var valueTuple in a)
-                {
-                    var first  = list.Find(p => p.Value == valueTuple.first);
-                    var second = list.Find(p => p.Value == valueTuple.second);
-
-                    if (first == null)
-                    {
-                        first = new Node(valueTuple.first);
-                        list.Add(first);
-                    }
-
-                    if (second == null)
-                    {
-                        second = new Node(valueTuple.second);
-                        list.Add(second);
-                    }
-
-                    first.AddChild(second);
-                }
-
-                var doableNodes = new List<Node>();
-
-                foreach (var node in list)
-                {
-                    if (node.Ready)
-                    {
-                        doableNodes.Add(node);
-                    }
-                }
+                var doableNodes = list.Where(node => node.Ready);
 
                 int i                  = 0;
                 var orderedDoableNodes = doableNodes.OrderBy(p => p.Value).ToList();
