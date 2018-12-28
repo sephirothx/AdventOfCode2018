@@ -80,13 +80,13 @@ namespace AdventCalendar
                 var coordinates = input.Select(s => s.Split(',').Select(int.Parse).ToArray())
                                        .Select(pair => new Coordinate(pair[0], pair[1])).ToArray();
 
-                int maxX = coordinates.Max(c => c.X) + 1;
-                int maxY = coordinates.Max(c => c.Y) + 1;
+                int maxX = coordinates.Max(c => c.X);
+                int maxY = coordinates.Max(c => c.Y);
 
                 int safeArea = 0;
 
-                for (int i = 0; i < maxX; i++)
-                for (int j = 0; j < maxY; j++)
+                for (int i = 0; i <= maxX; i++)
+                for (int j = 0; j <= maxY; j++)
                 {
                     int totalDistance = coordinates.Aggregate(0, (agg, c) => agg + c.GetDistance(i, j));
 
